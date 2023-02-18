@@ -1,3 +1,4 @@
+display:[
 rm(list=ls())    # Removes all items in Environment!
 options(repr.plot.width = 6, repr.plot.height = 6,repr.plot.res = 150)
 
@@ -39,4 +40,4 @@ get_estimates(my.Pooled.model)
 
 #test the coefficients for homogeneity across equations
 pooltest(my.Pooled.model, myOLS.pvcm)
-
+]
