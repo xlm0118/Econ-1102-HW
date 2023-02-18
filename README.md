@@ -1,4 +1,5 @@
-rm(list=ls())    # Removes all items in Environment!
+rm(list=ls())    
+# Removes all items in Environment!
 options(repr.plot.width = 6, repr.plot.height = 6,repr.plot.res = 150)
 
 # LOAD PACKAGES:
