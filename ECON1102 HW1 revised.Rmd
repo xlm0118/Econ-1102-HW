@@ -1,0 +1,183 @@
+---
+title: "Econ1102 HW1"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    df_print: paged
+date: "2023-02-19"
+---
+**Problem 1:**
+**a) Estimate the model by OLS, equation-by-equation, and compare the results obtained with SUR(GLS) estimation. Why are they different?**
+
+First read csv file and convert the data frame:
+```{r}
+rm(list=ls())    # Removes all items in Environment!
+options(repr.plot.width = 6, repr.plot.height = 6,repr.plot.res = 150)
+# LOAD PACKAGES:
+packages <- c("plm","systemfit","modelsummary")
+# Loop though vector and load respective packages:
+zzz <- lapply(packages, function(xxx) suppressMessages(require(xxx, 
+                                                               character.only = TRUE, quietly=TRUE, warn.conflicts = FALSE)))  # quiet no warnings
+#zzz <- lapply(packages, require, character.only = TRUE) # verbose with warnings
+#read data from file
+my.raw.data <- read.csv("~/Desktop/Grunfeld.csv")
+my.data <- pdata.frame(my.raw.data, c("FIRM", "YEAR"))  #configure the data as a panel
+my.data
+```
+Estimate the model by OLS:
+```{r}
+#Using OLS estumation
+myOLS.sysfit <- systemfit(I ~ F + C, method = "OLS", data = my.data)
+# summary(myOLS.sysfit)$coeff
+get_estimates(myOLS.sysfit)
+```
+Estimate the model by SUR
+```{r}
+#using SUR estimation
+mySUR.sysfit <- systemfit(I ~ F + C, method = "SUR", data = my.data)
+# summary(mySUR.sysfit)$coeff
+get_estimates(mySUR.sysfit)
+```
+The results obtained with OLS and SUR estimation are different, they have different coefficient estimations and standard errors. From the summary table above, we can infer that SUR estimation has lower standard errors than OLS, so SUR model provides small gains in efficiency.
+
+When the standard errors of the coefficient estimates are smaller, it means that the estimates are more precise and have less variability, which in turn implies that they are more efficient.
+
+In the case of SUR estimation, because it accounts for the correlation between the error terms in the multiple regression equations, it can lead to more precise and efficient estimates of the parameters. This can result in smaller standard errors and a more accurate estimation of the coefficients compared to OLS estimation. OLS treats each equation in a multiple regression model as independent, while SUR accounts for the fact that the equations may be related to each other in some way. As a result, SUR estimation can lead to more efficient and reliable parameter estimates when the error terms are correlated.
+
+**b) Calculate the covariance and correlation matrix of the OLS residuals. Conduct the cross-sectional dependence/contemporaneous correlation using Breusch-Pagan LM test of Independence.**
+
+Calculate the covariance and correlation matrix of the OLS residuals:
+```{r}
+#Calculate the covariance and correlation matrix of the OLS residuals
+summary(myOLS.sysfit)$residCov
+summary(myOLS.sysfit)$residCor
+```
+Conduct the cross-sectional dependence/contemporaneous correlation using Breusch-Pagan LM test of Independence:
+```{r}
+myOLS.pvcm <- pvcm(I ~ F + C, data = my.data, model = "within")
+myOLS.pvcm
+
+# Conduct the cross-sectional dependence/contemporaneous correlation using Breusch-Pagan LM test of Independence
+pcdtest(myOLS.pvcm, test = c("lm"))
+```
+From the Breusch-Pagan LM test for cross-sectional dependence in panels we have p-value = 9.318e-06 which is less than 5%. It indicates that there is evidence to reject the null hypothesis that there is no heteroscedasticity in the regression model, which suggests the presence of significant cross-sectional dependence / contemporaneous correlation in the data.
+
+**c) Estimate the pooled model and test the coefficients for homogeneity across equations.**
+
+Estimate the pooled model:
+```{r}
+#Estimate the pooled model 
+my.Pooled.model <- plm(I ~ F + C, data = my.data, model = "pooling")
+get_estimates(my.Pooled.model)
+```
+Test the coefficients for homogeneity across equations:
+```{r}
+#using SUR estimation
+#test the coefficients for homogeneity across equations
+pooltest(my.Pooled.model, myOLS.pvcm)
+```
+The Chow test for the poolability of the data rejects the null hypothesis, the coefficients are  homogeneous across equations.
+
+**d) Now, compare the SUR(GLS) results with those from iterated SUR(GLS). Would iterating the SUR(GLS) have made any differences?**
+```{r}
+# iterated SUR estimation
+myITSUR.sysfit <- systemfit(I ~ F + C, method = "SUR", data = my.data, maxit = 100 )
+get_estimates(myITSUR.sysfit)
+```
+```{r}
+sur_coefs <- cbind(coef(mySUR.sysfit), coef(summary(mySUR.sysfit))[, 2:4])
+itsur_coefs <- cbind(coef(myITSUR.sysfit), coef(summary(myITSUR.sysfit))[, 2:4])
+# Combine results into a table
+est_table <- cbind(sur_coefs, itsur_coefs)
+colnames(est_table) <- c("SUR Coefficients", "SUR Std. Err.", "SUR t-value", "SUR p-value",
+                         "ITSUR Coefficients", "ITSUR Std. Err.", "ITSUR t-value", "ITSUR p-value")
+
+# Print table
+est_table
+
+```
+From the summary above we can infer that iterating the SUR has different coefficient estimations and standard errors, and a lower value of R-squared.
+The difference between SUR and ITSUR is that ITSUR involves iterating the SUR estimation process, where the residuals from one iteration are used to update the weighting matrix for the next iteration, until convergence is achieved.
+
+Iterating the SUR estimation process may lead to differences in the parameter estimates compared to the non-iterated SUR estimation. This is because the ITSUR approach allows for a more accurate estimation of the covariance matrix of the errors and can lead to more efficient estimates of the parameters.
+However, the gains from using ITSUR over SUR may depend on the degree of correlation among the error terms, the sample size, and the complexity of the model. In some cases, ITSUR may not provide any significant improvement in the parameter estimates, and may even lead to overfitting of the model or convergence issues.
+
+**Problem 2:**
+
+**Consider the two-equation system:**
+$$y_{1s} = \alpha_1y_2 +\beta_1 z_1+\mu_1$$
+$$y_{1d} = \alpha_2y_2 +\beta_2 z_2+\mu_2$$
+
+**as a typical supply/demand structural form, with the variable "quantity" appearing on the left-hand side and $y_{1s} = y_{1d} = y_1$ as implied by the market clearing condition.**
+
+
+
+**a) If $\alpha_1=0$ or $\alpha_2=0$, explain why a reduced form exists for $y_1$. (Hint: a reduced form expresses $y_1$ as a linear function of the exogenous variables and the structural errors.)**
+
+In the two-equation system given, $y_1$ appears as an endogenous variable in both equations, and $y_2$, $z_1$, and $z_2$ are all exogenous variables. If either $\alpha_1=0$ or $\alpha_2=0$, then one of the equations becomes a "reduced form" equation for $y_1$, because the endogenous variable is no longer affected by the other endogenous variable. 
+
+**If $\alpha_1=0$**, then the first equation becomes: $$y_{1s} = \beta_1 z_1+\mu_1$$
+Here, $y_2$ does not appear in the equation, so it is not affecting the value of $y_{1s}$. This means that $y_{1s}$ is now determined solely by the exogenous variable $z_1$ and the structural error term $\mu_1$. Since $y_{1s} = y_{1d}= y_1$, we have the equation:
+$$y_1 = \beta_1 z_1+\mu_1$$
+This is the reduced form equation for $y_1$.
+
+\br
+
+**If $\alpha_2=0$**, then the second equation becomes: $$y_{1d} = \beta_2 z_2+\mu_2$$
+Here, $y_2$ does not appear in the equation, so it is not affecting the value of $y_{1d}$. This means that $y_{1d}$ is now determined solely by the exogenous variable $z_2$ and the structural error term $\mu_2$. Since $y_{1s} = y_{1d}= y_1$, we have the equation:
+$$y_1=\beta_2 z_2+\mu_2$$
+is also the reduced form of $y_1$.
+
+If $\alpha_1=\alpha_2=0$, both demand and supply equations are reduced forms because there is no endogenous variable in the equation.
+
+
+**b) If $\alpha_1 ≠ 0$ and $\alpha_2=0$, find the reduced form for $y_2$.**
+
+
+From given infomation, the second equation becomes:
+
+$$y_{1d} = \beta_2 z_2+\mu_2$$
+
+Substituting to the first equation, we get:
+
+4$\beta_2 z_2+\mu_2 = \alpha_1y_2 +\beta_1 z_1+\mu_1$$
+
+$$y_2=\frac{1}{\alpha_1}(-\beta_1 z_1-\mu_1+\beta_2 z_2+\mu_2)$$
+
+$$y_2=-\frac{\beta_1}{\alpha_1}z_1-\frac{\mu_1}{\alpha_1}+\frac{\beta_2} {\alpha_1}z_2+\frac{\mu_2}{\alpha_1}$$
+
+This expression gives us the reduced form for $y_2$ in terms of the exogenous variables and the structural errors.
+
+
+**c) If $\alpha_1 ≠ 0$, $\alpha_2 ≠ 0$, and $\alpha_1 ≠ \alpha_2$, find the reduced form for $y_1$. Does $y_2$ have a reduced form in this case?**
+
+To find the reduced form for $y_1$, we first solve for $y_2$ by setting the two supply/demand equations equal to each other:
+$$\alpha_1y_2 +\beta_1 z_1+\mu_1 = \alpha_2y_2 +\beta_2 z_2+\mu_2$$
+Simplifying, we get:
+$$(\alpha_1 - \alpha_2)y_2 = \beta_2 z_2 - \beta_1 z_1 + \mu_2 - \mu_1$$
+Dividing both sides by $(\alpha_1 - \alpha_2)$, we get the reduced form of $y_2$:
+$$y_2 = \frac{\beta_2}{\alpha_1 - \alpha_2} z_2 - \frac{\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\mu_2 - \mu_1}{\alpha_1 - \alpha_2}$$
+Now we substitute this expression for $y_2$ into one of the original supply/demand equations (let's use $y_{1s}$) to get the reduced form for $y_1$:
+
+$$y_1 = \alpha_1y_2 +\beta_1 z_1+\mu_1 \ = \alpha_1\left(\frac{\beta_2}{\alpha_1 - \alpha_2} z_2 - \frac{\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\mu_2 - \mu_1}{\alpha_1 - \alpha_2}\right) +\beta_1 z_1+\mu_1$$
+
+Therefore, the reduced form for $y_1$ is:
+$$y_1 = \alpha_1\left(\frac{\beta_2}{\alpha_1 - \alpha_2} z_2 - \frac{\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\mu_2 - \mu_1}{\alpha_1 - \alpha_2}\right) +\beta_1 z_1+\mu_1$$
+
+$$y_1 = \frac{\alpha_1\beta_2 }{\alpha_1 - \alpha_2} z_2-\frac{2 - \alpha_2\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\alpha_1\mu_2 - \alpha_2\mu_1}{\alpha_1 - \alpha_2}$$
+Here, $y_1$ and $y_2$ both have a reduced form that expresses them as a linear function of the exogenous variables and the structural error terms.
+$$y_2 = \frac{\beta_2}{\alpha_1 - \alpha_2} z_2 - \frac{\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\mu_2 - \mu_1}{\alpha_1 - \alpha_2}$$
+$$y_1 = \frac{\alpha_1\beta_2 }{\alpha_1 - \alpha_2} z_2-\frac{2 - \alpha_2\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\alpha_1\mu_2 - \alpha_2\mu_1}{\alpha_1 - \alpha_2}$$ 
+
+
+
+**d) Is the condition $\alpha_1 ≠ \alpha_2$ likely to be met in supply and demand examples? Explain.**
+
+The condition $\alpha_1 \neq \alpha_2$ is likely to be met in supply and demand examples because it corresponds to a situation where the same change in $y_2$ affects the supply and demand of $y_1$ differently. In most cases, the demand of a normal good is negatively related with price while its supply is positively related with price, so $\alpha_1>0$,$\alpha_2<0$.
+
+
+When $\alpha_1 \neq \alpha_2$, it means that the slope of the supply curve ($\alpha_1$) and the slope of the demand curve ($\alpha_2$) are not equal. This implies that the elasticities of supply and demand with respect to $y_2$ are different. Specifically, if we hold all other variables constant, a given percentage change in $y_2$ will have a different percentage effect on $y_1$ through the supply channel than it will through the demand channel. The sensitivity of $y_1$ to changes in $y_2$ will differ between the supply and demand sides, leading to a situation where $\alpha_1 \neq \alpha_2$. Therefore, this condition is likely to be met in many supply and demand examples.
+
+
+
