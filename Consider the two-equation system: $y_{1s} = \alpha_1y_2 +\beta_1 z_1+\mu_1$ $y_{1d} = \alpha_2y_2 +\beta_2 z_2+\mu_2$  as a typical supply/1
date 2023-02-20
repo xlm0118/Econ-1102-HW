@@ -1,0 +1,16 @@
+To find the reduced form for $y_1$, we first solve for $y_2$ by setting the two supply/demand equations equal to each other:
+$$\alpha_1y_2 +\beta_1 z_1+\mu_1 = \alpha_2y_2 +\beta_2 z_2+\mu_2$$
+Simplifying, we get:
+$$(\alpha_1 - \alpha_2)y_2 = \beta_2 z_2 - \beta_1 z_1 + \mu_2 - \mu_1$$
+Dividing both sides by $(\alpha_1 - \alpha_2)$, we get:
+$$y_2 = \frac{\beta_2}{\alpha_1 - \alpha_2} z_2 - \frac{\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\mu_2 - \mu_1}{\alpha_1 - \alpha_2}$$
+Now we substitute this expression for $y_2$ into one of the original supply/demand equations (let's use $y_{1s}$) to get the reduced form for $y_1$:
+\begin{align*}
+y_{1s} &= \alpha_1y_2 +\beta_1 z_1+\mu_1 \
+&= \alpha_1\left(\frac{\beta_2}{\alpha_1 - \alpha_2} z_2 - \frac{\beta_1}{\alpha_1 - \alpha_2} z_1 + \frac{\mu_2 - \mu_1}{\alpha_1 - \alpha_2}\right) +\beta_1 z_1+\mu_1 \
+&= \frac{\alpha_1\beta_2}{\alpha_1 - \alpha_2} z_2 + \frac{\beta_1(\alpha_2 - \alpha_1)}{\alpha_1 - \alpha_2} z_1 + \frac{\alpha_1(\mu_2 - \mu_1)}{\alpha_1 - \alpha_2} + \mu_1 \
+&= \frac{\alpha_1\beta_2 - \alpha_2\beta_1}{\alpha_1 - \alpha_2} z_2 + \frac{\alpha_1\mu_2 - \alpha_2\mu_1}{\alpha_1 - \alpha_2}
+\end{align*}
+Therefore, the reduced form for $y_1$ is:
+$$y_1 = \frac{\alpha_1\beta_2 - \alpha_2\beta_1}{\alpha_1 - \alpha_2} z_2 + \frac{\alpha_1\mu_2 - \alpha_2\mu_1}{\alpha_1 - \alpha_2}$$
+As for $y_2$, it does have a reduced form as shown above.
